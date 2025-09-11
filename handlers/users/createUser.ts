@@ -10,7 +10,10 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
 
     // Basic validation for email and name fields
     if (!name || !email || !password) {
-      return { statusCode: 400, body: "Name and email are required" };
+      return {
+        statusCode: 400,
+        body: "Name, email, and password fields are required",
+      };
     }
 
     // Check if user with the same email already exists
