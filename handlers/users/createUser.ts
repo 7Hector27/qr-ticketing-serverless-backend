@@ -21,7 +21,7 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
       .scan({
         TableName: process.env.USERS_TABLE!,
         FilterExpression: "email = :email",
-        ExpressionAttributeValues: { ":email": email },
+        ExpressionAttributeValues: { ":email": email.toLowerCase() },
       })
       .promise();
     if (existingUser.Items && existingUser.Items.length > 0) {
@@ -38,7 +38,7 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
     const newUser = {
       userId: uuid(),
       name,
-      email,
+      email: email.toLowerCase(),
       role: "staff",
       createdAt: now,
       updatedAt: now,
