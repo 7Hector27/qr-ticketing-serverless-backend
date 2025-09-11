@@ -1,14 +1,15 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { ddb } from "../../utils/db";
 import { v4 as uuid } from "uuid";
+import * as bcrypt from "bcryptjs";
 
 export const main: APIGatewayProxyHandlerV2 = async (event) => {
   try {
     const body = JSON.parse(event.body ?? "{}");
-    const { name, email } = body;
+    const { name, email, password } = body;
 
     // Basic validation for email and name fields
-    if (!name || !email) {
+    if (!name || !email || !password) {
       return { statusCode: 400, body: "Name and email are required" };
     }
 
@@ -23,6 +24,11 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
     if (existingUser.Items && existingUser.Items.length > 0) {
       return { statusCode: 400, body: "User with this email already exists" };
     }
+
+    // Hash the password with salt
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
     // Create new user
     // defaulting role to 'staff' for simplicity
     const now = new Date().toISOString();
@@ -33,6 +39,7 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
       role: "staff",
       createdAt: now,
       updatedAt: now,
+      password: passwordHash,
     };
 
     await ddb
@@ -41,7 +48,18 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
         Item: newUser,
       })
       .promise();
-    return { statusCode: 201, body: JSON.stringify(newUser) };
+
+    return {
+      statusCode: 201,
+      body: JSON.stringify({
+        id: newUser.userId,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        createdAt: newUser.createdAt,
+        updatedAt: newUser.updatedAt,
+      }),
+    };
   } catch (err: any) {
     console.error(err);
     return { statusCode: 500, body: err.message };
