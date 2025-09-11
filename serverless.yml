@@ -1,0 +1,69 @@
+service: qr-ticketing
+frameworkVersion: "4"
+
+org: null
+app: null
+console: false
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  stage: dev
+  environment:
+    USERS_TABLE: Users
+    # EVENTS_TABLE: Events
+    # TICKETS_TABLE: Tickets
+    # ORDERS_TABLE: Orders
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:Query
+            - dynamodb:Scan
+          Resource:
+            - arn:aws:dynamodb:${self:provider.region}:*:table/Users
+            # - arn:aws:dynamodb:${self:provider.region}:*:table/Events
+            # - arn:aws:dynamodb:${self:provider.region}:*:table/Tickets
+            # - arn:aws:dynamodb:${self:provider.region}:*:table/Orders
+
+functions:
+  getUsers:
+    handler: handlers/getUsers.main
+    events:
+      - httpApi:
+          path: /users
+          method: GET
+
+  # createEvent:
+  #   handler: handlers/createEvent.main
+  #   events:
+  #     - httpApi:
+  #         path: /events
+  #         method: POST
+
+  # listEvents:
+  #   handler: handlers/listEvents.main
+  #   events:
+  #     - httpApi:
+  #         path: /events
+  #         method: GET
+
+  # reserveTickets:
+  #   handler: handlers/reserveTickets.main
+  #   events:
+  #     - httpApi:
+  #         path: /orders
+  #         method: POST
+
+  # validateTicket:
+  # handler: handlers/validateTicket.main
+  # events:
+  #   - httpApi:
+  #       path: /tickets/validate
+  #       method: POST
