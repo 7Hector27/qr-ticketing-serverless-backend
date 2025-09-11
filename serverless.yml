@@ -10,11 +10,24 @@ provider:
   runtime: nodejs18.x
   region: us-east-1
   stage: dev
+  httpApi:
+    cors:
+      allowedOrigins:
+        - "*"
+      allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+      allowCredentials: false
+
   environment:
     USERS_TABLE: Users
-    # EVENTS_TABLE: Events
-    # TICKETS_TABLE: Tickets
-    # ORDERS_TABLE: Orders
+
   iam:
     role:
       statements:
@@ -28,42 +41,17 @@ provider:
             - dynamodb:Scan
           Resource:
             - arn:aws:dynamodb:${self:provider.region}:*:table/Users
-            # - arn:aws:dynamodb:${self:provider.region}:*:table/Events
-            # - arn:aws:dynamodb:${self:provider.region}:*:table/Tickets
-            # - arn:aws:dynamodb:${self:provider.region}:*:table/Orders
 
 functions:
   getUsers:
-    handler: handlers/getUsers.main
+    handler: handlers/users/getUsers.main
     events:
       - httpApi:
           path: /users
           method: GET
-
-  # createEvent:
-  #   handler: handlers/createEvent.main
-  #   events:
-  #     - httpApi:
-  #         path: /events
-  #         method: POST
-
-  # listEvents:
-  #   handler: handlers/listEvents.main
-  #   events:
-  #     - httpApi:
-  #         path: /events
-  #         method: GET
-
-  # reserveTickets:
-  #   handler: handlers/reserveTickets.main
-  #   events:
-  #     - httpApi:
-  #         path: /orders
-  #         method: POST
-
-  # validateTicket:
-  # handler: handlers/validateTicket.main
-  # events:
-  #   - httpApi:
-  #       path: /tickets/validate
-  #       method: POST
+  createUser:
+    handler: handlers/users/createUser.main
+    events:
+      - httpApi:
+          path: /users
+          method: POST

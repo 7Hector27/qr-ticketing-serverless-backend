@@ -1,5 +1,5 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
-import { ddb } from "../utils/db";
+import { ddb } from "../../utils/db";
 
 export const main: APIGatewayProxyHandlerV2 = async () => {
   try {
