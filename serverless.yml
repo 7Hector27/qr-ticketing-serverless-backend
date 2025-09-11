@@ -1,15 +1,12 @@
 service: qr-ticketing
 frameworkVersion: "4"
 
-org: null
-app: null
-console: false
-
 provider:
   name: aws
   runtime: nodejs18.x
   region: us-east-1
   stage: dev
+
   httpApi:
     cors:
       allowedOrigins:
@@ -27,6 +24,7 @@ provider:
 
   environment:
     USERS_TABLE: Users
+    JWT_SECRET: ${/qr-ticketing/dev/JWT_SECRET~true}
 
   iam:
     role:
@@ -41,6 +39,7 @@ provider:
             - dynamodb:Scan
           Resource:
             - arn:aws:dynamodb:${self:provider.region}:*:table/Users
+            - arn:aws:dynamodb:${self:provider.region}:*:table/Users/index/*
 
 functions:
   getUsers:
@@ -49,9 +48,17 @@ functions:
       - httpApi:
           path: /users
           method: GET
+
   createUser:
     handler: handlers/users/createUser.main
     events:
       - httpApi:
           path: /users
+          method: POST
+
+  loginUser:
+    handler: handlers/users/loginUser.main
+    events:
+      - httpApi:
+          path: /login
           method: POST

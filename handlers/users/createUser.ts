@@ -25,7 +25,10 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
       })
       .promise();
     if (existingUser.Items && existingUser.Items.length > 0) {
-      return { statusCode: 400, body: "User with this email already exists" };
+      return {
+        statusCode: 400,
+        body: JSON.stringify("User with this email already exists"),
+      };
     }
 
     // Hash the password with salt
