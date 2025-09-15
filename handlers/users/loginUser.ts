@@ -7,6 +7,7 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
   try {
     const body = JSON.parse(event.body ?? "{}");
     const { email, password } = body;
+    const secret = process.env.JWT_SECRET!; // 👈 comes from Secrets Manager
 
     if (!email || !password) {
       return {
@@ -42,19 +43,28 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
     }
 
     // Check JWT_SECRET
-    if (!process.env.JWT_SECRET) {
+    if (!secret) {
       throw new Error("JWT_SECRET is not set in environment");
     }
 
     const token = jwt.sign(
-      { userId: user.userId, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
+      {
+        userId: user.userId,
+        email: user.email,
+        role: user.role,
+        name: user.name,
+      },
+      secret,
       { expiresIn: "1h" }
     );
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ token }),
+      cookies: [`token=${token}; Path=/; SameSite=lax;  Max-Age=3600`],
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ success: true }),
     };
   } catch (error: any) {
     console.error("Login error:", error);

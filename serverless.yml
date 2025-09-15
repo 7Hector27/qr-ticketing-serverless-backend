@@ -10,7 +10,7 @@ provider:
   httpApi:
     cors:
       allowedOrigins:
-        - "*"
+        - http://localhost:3000
       allowedMethods:
         - GET
         - POST
@@ -20,11 +20,11 @@ provider:
       allowedHeaders:
         - Content-Type
         - Authorization
-      allowCredentials: false
+      allowCredentials: true
 
   environment:
     USERS_TABLE: Users
-    JWT_SECRET: ${/qr-ticketing/dev/JWT_SECRET~true}
+    JWT_SECRET: ${ssm:/aws/reference/secretsmanager/qr-ticketing-jwt}
 
   iam:
     role:
