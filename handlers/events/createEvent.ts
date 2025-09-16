@@ -5,7 +5,7 @@ import { verifyAuth } from "../../utils/auth";
 
 export const main: APIGatewayProxyHandlerV2 = async (event) => {
   try {
-    //  Authenticate request
+    //Authenticate request
     const auth = verifyAuth(event);
 
     //  Authorize: only admin/staff can create events
@@ -21,11 +21,11 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
       title,
       description,
       date,
-      time,
       location,
       price,
-      quantity,
+      totalTickets,
       featured,
+      imageUrl,
     } = body;
 
     // Event Validation
@@ -33,10 +33,9 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
       !title ||
       !description ||
       !date ||
-      !time ||
       !location ||
       !price ||
-      !quantity
+      !totalTickets
     ) {
       return {
         statusCode: 400,
@@ -51,14 +50,14 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
       title,
       description,
       date,
-      time,
       location,
       price: Number(price),
-      totalTickets: Number(quantity),
-      availableTickets: Number(quantity),
+      totalTickets: Number(totalTickets),
+      availableTickets: Number(totalTickets),
       createdAt: now,
       updatedAt: now,
       featured: featured,
+      imageUrl: imageUrl ?? null,
     };
 
     //createEvent

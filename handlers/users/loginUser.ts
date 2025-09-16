@@ -7,13 +7,9 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
   try {
     const body = JSON.parse(event.body ?? "{}");
     const { email, password } = body;
-    const secret = process.env.JWT_SECRET!; // 👈 comes from Secrets Manager
 
     if (!email || !password) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ message: "Email and password are required" }),
-      };
+      return jsonResponse(400, { message: "Email and password are required" });
     }
 
     // Fetch user by email
@@ -25,10 +21,7 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
       .promise();
 
     if (!existingUser.Item) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ message: "Invalid email or password" }),
-      };
+      return jsonResponse(401, { message: "Invalid email or password" });
     }
 
     const user = existingUser.Item;
@@ -36,13 +29,10 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
     // Compare password
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ message: "Invalid email or password" }),
-      };
+      return jsonResponse(401, { message: "Invalid email or password" });
     }
 
-    // Check JWT_SECRET
+    const secret = process.env.JWT_SECRET;
     if (!secret) {
       throw new Error("JWT_SECRET is not set in environment");
     }
@@ -58,19 +48,16 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
       { expiresIn: "1h" }
     );
 
-    return {
-      statusCode: 200,
-      cookies: [`token=${token}; Path=/; SameSite=lax;  Max-Age=3600`],
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ success: true }),
-    };
+    return jsonResponse(200, { token });
   } catch (error: any) {
     console.error("Login error:", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ message: error.message }),
-    };
+    return jsonResponse(500, { message: error.message });
   }
 };
+
+// small helper
+const jsonResponse = (statusCode: number, data: any) => ({
+  statusCode,
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(data),
+});

@@ -26,6 +26,7 @@ provider:
     USERS_TABLE: Users
     EVENTS_TABLE: Events
     TICKETS_TABLE: Tickets
+    S3_BUCKET: ${self:service}-${self:provider.stage}-uploads
     JWT_SECRET: ${ssm:/aws/reference/secretsmanager/qr-ticketing-jwt}
 
   iam:
@@ -46,6 +47,18 @@ provider:
             - arn:aws:dynamodb:${self:provider.region}:*:table/Events/index/*
             - arn:aws:dynamodb:${self:provider.region}:*:table/Tickets
             - arn:aws:dynamodb:${self:provider.region}:*:table/Tickets/index/*
+            # S3 permissions for the Lambda that signs URLs / (optional) reads objects
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+          Resource:
+            - arn:aws:s3:::${self:service}-${self:provider.stage}-uploads/*
+        - Effect: Allow
+          Action:
+            - s3:ListBucket
+          Resource:
+            - arn:aws:s3:::${self:service}-${self:provider.stage}-uploads
 functions:
   getUsers:
     handler: handlers/users/getUsers.main
@@ -73,3 +86,28 @@ functions:
       - httpApi:
           path: /events
           method: POST
+  getUploadUrl:
+    handler: handlers/uploads/getUploadUrl.main
+    events:
+      - httpApi:
+          path: /uploads/url
+          method: POST
+resources:
+  Resources:
+    UploadsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:service}-${self:provider.stage}-uploads
+        CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins:
+                - http://localhost:3000
+              AllowedMethods:
+                - GET
+                - PUT
+                - HEAD
+              AllowedHeaders:
+                - "*"
+              ExposedHeaders:
+                - ETag
+              MaxAge: 3000
