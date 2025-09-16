@@ -24,6 +24,8 @@ provider:
 
   environment:
     USERS_TABLE: Users
+    EVENTS_TABLE: Events
+    TICKETS_TABLE: Tickets
     JWT_SECRET: ${ssm:/aws/reference/secretsmanager/qr-ticketing-jwt}
 
   iam:
@@ -40,7 +42,10 @@ provider:
           Resource:
             - arn:aws:dynamodb:${self:provider.region}:*:table/Users
             - arn:aws:dynamodb:${self:provider.region}:*:table/Users/index/*
-
+            - arn:aws:dynamodb:${self:provider.region}:*:table/Events
+            - arn:aws:dynamodb:${self:provider.region}:*:table/Events/index/*
+            - arn:aws:dynamodb:${self:provider.region}:*:table/Tickets
+            - arn:aws:dynamodb:${self:provider.region}:*:table/Tickets/index/*
 functions:
   getUsers:
     handler: handlers/users/getUsers.main
@@ -61,4 +66,10 @@ functions:
     events:
       - httpApi:
           path: /login
+          method: POST
+  createEvent:
+    handler: handlers/events/createEvent.main
+    events:
+      - httpApi:
+          path: /events
           method: POST
