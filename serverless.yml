@@ -80,18 +80,28 @@ functions:
       - httpApi:
           path: /login
           method: POST
+
+  getAuthenticatedUser:
+    handler: handlers/users/auth/getAuthenticatedUser.main
+    events:
+      - httpApi:
+          path: /users/auth
+          method: GET
+
   createEvent:
     handler: handlers/events/createEvent.main
     events:
       - httpApi:
           path: /events
           method: POST
+
   getUploadUrl:
     handler: handlers/uploads/getUploadUrl.main
     events:
       - httpApi:
           path: /uploads/url
           method: POST
+
 resources:
   Resources:
     UploadsBucket:

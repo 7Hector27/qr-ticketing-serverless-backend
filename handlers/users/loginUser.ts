@@ -48,16 +48,38 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
       { expiresIn: "1h" }
     );
 
-    return jsonResponse(200, { token });
+    // ✅ Don’t return token in body — only in HttpOnly cookie
+    return jsonResponse(200, { success: true }, token);
   } catch (error: any) {
     console.error("Login error:", error);
     return jsonResponse(500, { message: error.message });
   }
 };
 
-// small helper
-const jsonResponse = (statusCode: number, data: any) => ({
-  statusCode,
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(data),
-});
+// helper
+const jsonResponse = (statusCode: number, data: any, token?: string) => {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    const isProd = false;
+
+    headers["Set-Cookie"] = [
+      `authToken=${token}`,
+      "Path=/",
+      "HttpOnly",
+      isProd ? "Secure" : "", // only add Secure in prod
+      isProd ? "SameSite=None" : "SameSite=Lax", // Lax works on localhost
+      "Max-Age=3600",
+    ]
+      .filter(Boolean)
+      .join("; ");
+  }
+
+  return {
+    statusCode,
+    headers,
+    body: JSON.stringify(data),
+  };
+};
