@@ -47,7 +47,6 @@ provider:
             - arn:aws:dynamodb:${self:provider.region}:*:table/Events/index/*
             - arn:aws:dynamodb:${self:provider.region}:*:table/Tickets
             - arn:aws:dynamodb:${self:provider.region}:*:table/Tickets/index/*
-            # S3 permissions for the Lambda that signs URLs / (optional) reads objects
         - Effect: Allow
           Action:
             - s3:PutObject
@@ -59,6 +58,7 @@ provider:
             - s3:ListBucket
           Resource:
             - arn:aws:s3:::${self:service}-${self:provider.stage}-uploads
+
 functions:
   getUsers:
     handler: handlers/users/getUsers.main
@@ -66,6 +66,10 @@ functions:
       - httpApi:
           path: /users
           method: GET
+    package:
+      patterns:
+        - handlers/users/getUsers.ts
+        - utils/**
 
   createUser:
     handler: handlers/users/createUser.main
@@ -73,6 +77,10 @@ functions:
       - httpApi:
           path: /users
           method: POST
+    package:
+      patterns:
+        - handlers/users/createUser.ts
+        - utils/**
 
   loginUser:
     handler: handlers/users/loginUser.main
@@ -80,6 +88,10 @@ functions:
       - httpApi:
           path: /login
           method: POST
+    package:
+      patterns:
+        - handlers/users/loginUser.ts
+        - utils/**
 
   getAuthenticatedUser:
     handler: handlers/users/auth/getAuthenticatedUser.main
@@ -87,6 +99,10 @@ functions:
       - httpApi:
           path: /users/auth
           method: GET
+    package:
+      patterns:
+        - handlers/users/auth/getAuthenticatedUser.ts
+        - utils/**
 
   createEvent:
     handler: handlers/events/createEvent.main
@@ -94,6 +110,21 @@ functions:
       - httpApi:
           path: /events
           method: POST
+    package:
+      patterns:
+        - handlers/events/createEvent.ts
+        - utils/**
+
+  getEvents:
+    handler: handlers/events/getEvents.main
+    events:
+      - httpApi:
+          path: /events
+          method: GET
+    package:
+      patterns:
+        - handlers/events/getEvents.ts
+        - utils/**
 
   getUploadUrl:
     handler: handlers/uploads/getUploadUrl.main
@@ -101,6 +132,10 @@ functions:
       - httpApi:
           path: /uploads/url
           method: POST
+    package:
+      patterns:
+        - handlers/uploads/getUploadUrl.ts
+        - utils/**
 
 resources:
   Resources:
@@ -121,3 +156,19 @@ resources:
               ExposedHeaders:
                 - ETag
               MaxAge: 3000
+
+package:
+  individually: true
+  patterns:
+    - "!node_modules/**"
+    - "!package-lock.json"
+    - "!yarn.lock"
+    - "!tests/**"
+    - "!docs/**"
+    - "!coverage/**"
+    - "!README.md"
+    - "!public/**"
+    - "!src/**" # exclude frontend if you colocated it
+    - "!.next/**"
+    - "!.git/**"
+    - "!.vscode/**"
