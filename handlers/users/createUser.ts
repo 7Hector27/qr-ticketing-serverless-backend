@@ -6,13 +6,13 @@ import * as bcrypt from "bcryptjs";
 export const main: APIGatewayProxyHandlerV2 = async (event) => {
   try {
     const body = JSON.parse(event.body ?? "{}");
-    const { name, email, password } = body;
+    const { firstName, lastName, email, password } = body;
 
     // Basic validation for email and name fields
-    if (!name || !email || !password) {
+    if (!firstName || !lastName || !email || !password) {
       return {
         statusCode: 400,
-        body: "Name, email, and password fields are required",
+        body: "firstName, lastName, email, and password fields are required",
       };
     }
 
@@ -40,7 +40,10 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
     const now = new Date().toISOString();
     const newUser = {
       userId: uuid(),
-      name,
+      name: {
+        first: firstName,
+        last: lastName,
+      },
       email: email.toLowerCase(),
       role: "staff",
       createdAt: now,
