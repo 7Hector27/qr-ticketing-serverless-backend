@@ -126,6 +126,17 @@ functions:
         - handlers/events/getEvents.ts
         - utils/**
 
+  getEventById:
+    handler: handlers/events/getEventById.main
+    events:
+      - httpApi:
+          path: /events/{id}
+          method: GET
+    package:
+      patterns:
+        - handlers/events/getEventById.ts
+        - utils/**
+
   getUploadUrl:
     handler: handlers/uploads/getUploadUrl.main
     events:
