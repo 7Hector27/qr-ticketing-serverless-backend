@@ -40,6 +40,8 @@ provider:
             - dynamodb:DeleteItem
             - dynamodb:Query
             - dynamodb:Scan
+            - ses:SendEmail
+            - ses:SendRawEmail
           Resource:
             - arn:aws:dynamodb:${self:provider.region}:*:table/Users
             - arn:aws:dynamodb:${self:provider.region}:*:table/Users/index/*
@@ -47,6 +49,7 @@ provider:
             - arn:aws:dynamodb:${self:provider.region}:*:table/Events/index/*
             - arn:aws:dynamodb:${self:provider.region}:*:table/Tickets
             - arn:aws:dynamodb:${self:provider.region}:*:table/Tickets/index/*
+            - arn:aws:ses:us-east-1:859493432159:identity/Virus_714@yahoo.com
         - Effect: Allow
           Action:
             - s3:PutObject
@@ -146,6 +149,17 @@ functions:
     package:
       patterns:
         - handlers/uploads/getUploadUrl.ts
+        - utils/**
+
+  testSendTicket:
+    handler: handlers/tickets/testSendTicket.main
+    events:
+      - httpApi:
+          path: /tickets/test
+          method: POST
+    package:
+      patterns:
+        - handlers/tickets/testSendTicket.ts
         - utils/**
 
 resources:

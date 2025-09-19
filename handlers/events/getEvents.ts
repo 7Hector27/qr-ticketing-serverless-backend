@@ -3,43 +3,41 @@ import { ddb } from "../../utils/db";
 
 export const main: APIGatewayProxyHandlerV2 = async (event) => {
   try {
-    const params: any = {
-      TableName: process.env.EVENTS_TABLE!,
-      Limit: event.queryStringParameters?.limit
-        ? parseInt(event.queryStringParameters.limit, 10)
-        : 10,
-    };
+    const limit = event.queryStringParameters?.limit
+      ? parseInt(event.queryStringParameters.limit, 10)
+      : 10;
 
-    // Handle pagination
-    if (event.queryStringParameters?.lastKey) {
-      params.ExclusiveStartKey = JSON.parse(
-        decodeURIComponent(event.queryStringParameters.lastKey)
-      );
-    }
+    let items: any[] = [];
+    let lastKey;
+    let scanned = 0;
 
-    // Build optional filters
-    let filterExpr = [];
-    let exprValues: Record<string, any> = {};
+    do {
+      const params: any = {
+        TableName: process.env.EVENTS_TABLE!,
+        Limit: limit, // per page scan
+        ExclusiveStartKey: lastKey,
+      };
 
-    if (event.queryStringParameters?.featured) {
-      const isFeatured = event.queryStringParameters.featured === "true";
-      filterExpr.push("featured = :featured");
-      exprValues[":featured"] = isFeatured;
-    }
+      if (event.queryStringParameters?.featured) {
+        const isFeatured = event.queryStringParameters.featured === "true";
+        params.FilterExpression = "featured = :featured";
+        params.ExpressionAttributeValues = { ":featured": isFeatured };
+      }
 
-    if (filterExpr.length > 0) {
-      params.FilterExpression = filterExpr.join(" AND ");
-      params.ExpressionAttributeValues = exprValues;
-    }
-    const result = await ddb.scan(params).promise();
+      const result = await ddb.scan(params).promise();
+
+      items = items.concat(result.Items || []);
+      lastKey = result.LastEvaluatedKey;
+      scanned += result.Count || 0;
+
+      // stop if we have enough
+    } while (items.length < limit && lastKey);
 
     return {
       statusCode: 200,
       body: JSON.stringify({
-        items: result.Items || [],
-        nextKey: result.LastEvaluatedKey
-          ? encodeURIComponent(JSON.stringify(result.LastEvaluatedKey))
-          : null,
+        items: items.slice(0, limit),
+        nextKey: lastKey ? encodeURIComponent(JSON.stringify(lastKey)) : null,
       }),
     };
   } catch (err: any) {
