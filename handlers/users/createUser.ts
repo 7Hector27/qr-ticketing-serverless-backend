@@ -45,7 +45,7 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
         last: lastName,
       },
       email: email.toLowerCase(),
-      role: "staff",
+      role: "customer",
       createdAt: now,
       updatedAt: now,
       password: passwordHash,
