@@ -26,9 +26,10 @@ provider:
     USERS_TABLE: Users
     EVENTS_TABLE: Events
     TICKETS_TABLE: Tickets
+    ORDERS_TABLE: Orders
     S3_BUCKET: ${self:service}-${self:provider.stage}-uploads
     JWT_SECRET: ${ssm:/aws/reference/secretsmanager/qr-ticketing-jwt}
-
+    TICKET_SECRET: ${ssm:/aws/reference/secretsmanager/ticket-secret}
   iam:
     role:
       statements:
@@ -49,6 +50,8 @@ provider:
             - arn:aws:dynamodb:${self:provider.region}:*:table/Events/index/*
             - arn:aws:dynamodb:${self:provider.region}:*:table/Tickets
             - arn:aws:dynamodb:${self:provider.region}:*:table/Tickets/index/*
+            - arn:aws:dynamodb:${self:provider.region}:*:table/Orders
+            - arn:aws:dynamodb:${self:provider.region}:*:table/Orders/index/*
             - arn:aws:ses:us-east-1:859493432159:identity/Virus_714@yahoo.com
         - Effect: Allow
           Action:
@@ -160,6 +163,17 @@ functions:
     package:
       patterns:
         - handlers/tickets/testSendTicket.ts
+        - utils/**
+
+  createOrder:
+    handler: handlers/orders/createOrder.main
+    events:
+      - httpApi:
+          path: /orders
+          method: POST
+    package:
+      patterns:
+        - handlers/orders/createOrder.ts
         - utils/**
 
 resources:
