@@ -27,7 +27,7 @@ export interface TicketType {
 }
 
 export interface OrderType {
-  id: string;
+  orderId: string;
   userId?: string;
   attendeeEmail: string;
   eventId: string;

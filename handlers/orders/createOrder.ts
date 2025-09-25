@@ -4,7 +4,6 @@ import { v4 as uuid } from "uuid";
 import jwt from "jsonwebtoken";
 import { ddb } from "../../utils/db";
 import { EventType, OrderType } from "../../types";
-import { unmarshall, marshall } from "@aws-sdk/util-dynamodb";
 
 export const main: APIGatewayProxyHandlerV2 = async (event) => {
   try {
@@ -16,27 +15,33 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
         body: JSON.stringify({ message: "Only customers can create orders" }),
       };
     }
-
-    const { numberOfTickets, eventId } = JSON.parse(event.body ?? "{}");
+    const body = JSON.parse(event.body ?? "{}");
+    const { eventId, numberOfTickets } = body;
 
     if (!numberOfTickets || !eventId) {
       return {
         statusCode: 400,
-        body: "Missing required fields",
+        body: JSON.stringify({ message: "Missing required fields" }),
       };
     }
 
     const resp = await ddb
       .get({
         TableName: process.env.EVENTS_TABLE!,
-        Key: marshall({ eventId }),
+        Key: { eventId: eventId },
       })
       .promise();
 
-    if (!resp.Item) throw new Error("Event not found");
+    if (!resp.Item) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ message: "Missing required fields" }),
+      };
+    }
 
-    const eventResp = unmarshall(resp.Item) as EventType;
+    const eventResp = resp.Item as EventType;
     console.log(eventResp, "eventResp");
+    console.log("4 - Console log");
 
     if (eventResp.availableTickets < numberOfTickets) {
       return {
@@ -44,12 +49,11 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
         body: JSON.stringify({ message: "Not enough tickets available" }),
       };
     }
-
     // Decrement tickets atomically
     await ddb
       .update({
         TableName: process.env.EVENTS_TABLE!,
-        Key: { eventId },
+        Key: { eventId: eventId },
         UpdateExpression: "SET availableTickets = availableTickets - :dec",
         ConditionExpression: "availableTickets >= :dec",
         ExpressionAttributeValues: {
@@ -94,7 +98,7 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
     const orderId = uuid();
 
     const order: OrderType = {
-      id: orderId,
+      orderId: orderId,
       userId: auth.userId,
       attendeeEmail: auth.email,
       eventId,
@@ -113,14 +117,16 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
     // link tickets to order
     await Promise.all(
       ticketIds.map((ticketId) =>
-        ddb.update({
-          TableName: process.env.TICKETS_TABLE!,
-          Key: { ticketId },
-          UpdateExpression: "SET orderId = :orderId",
-          ExpressionAttributeValues: {
-            ":orderId": orderId,
-          },
-        })
+        ddb
+          .update({
+            TableName: process.env.TICKETS_TABLE!,
+            Key: { ticketId: ticketId },
+            UpdateExpression: "SET orderId = :orderId",
+            ExpressionAttributeValues: {
+              ":orderId": orderId,
+            },
+          })
+          .promise()
       )
     );
 
@@ -132,7 +138,7 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
     console.error(error);
     return {
       statusCode: 500,
-      body: error.message,
+      body: JSON.stringify({ message: error.message }),
     };
   }
 };
