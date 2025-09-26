@@ -95,7 +95,7 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
         .promise();
     }
 
-    const orderId = uuid();
+    const orderId = uuid().slice(0, 8);
 
     const order: OrderType = {
       orderId: orderId,
