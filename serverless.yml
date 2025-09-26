@@ -41,6 +41,7 @@ provider:
             - dynamodb:DeleteItem
             - dynamodb:Query
             - dynamodb:Scan
+            - dynamodb:BatchGetItem
             - ses:SendEmail
             - ses:SendRawEmail
           Resource:
@@ -174,6 +175,17 @@ functions:
     package:
       patterns:
         - handlers/orders/createOrder.ts
+        - utils/**
+
+  getOrdersByUserId:
+    handler: handlers/orders/getOrdersByUserId.main
+    events:
+      - httpApi:
+          path: /orders/{id}
+          method: GET
+    package:
+      patterns:
+        - handlers/orders/getOrdersByUserId.ts
         - utils/**
 
 resources:

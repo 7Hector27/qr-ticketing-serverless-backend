@@ -45,7 +45,7 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
         name: user.name,
       },
       secret,
-      { expiresIn: "1h" }
+      { expiresIn: "3h" }
     );
 
     // ✅ Don’t return token in body — only in HttpOnly cookie
