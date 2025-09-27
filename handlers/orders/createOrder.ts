@@ -62,12 +62,12 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
       })
       .promise();
 
-    const ticketIds: string[] = [];
+    const tickets: string[] = [];
 
     for (let i = 0; i < numberOfTickets; i++) {
-      // create ticket id and pass to ticketIds
+      // create ticket id and pass to tickets
       const ticketId = uuid();
-      ticketIds.push(ticketId);
+      tickets.push(ticketId);
 
       //create qr code data
       const qrCodeData = jwt.sign(
@@ -102,7 +102,7 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
       userId: auth.userId,
       attendeeEmail: auth.email,
       eventId,
-      ticketIds,
+      tickets,
       createdAt: new Date().toISOString(),
     };
 
@@ -116,7 +116,7 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
 
     // link tickets to order
     await Promise.all(
-      ticketIds.map((ticketId) =>
+      tickets.map((ticketId) =>
         ddb
           .update({
             TableName: process.env.TICKETS_TABLE!,

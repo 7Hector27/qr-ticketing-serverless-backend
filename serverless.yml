@@ -181,11 +181,22 @@ functions:
     handler: handlers/orders/getOrdersByUserId.main
     events:
       - httpApi:
-          path: /orders/{id}
+          path: /orders/{id}/orders
           method: GET
     package:
       patterns:
         - handlers/orders/getOrdersByUserId.ts
+        - utils/**
+
+  getOrderById:
+    handler: handlers/orders/getOrderById.main
+    events:
+      - httpApi:
+          path: /orders/{id}
+          method: GET
+    package:
+      patterns:
+        - handlers/orders/getOrderById.ts
         - utils/**
 
 resources:

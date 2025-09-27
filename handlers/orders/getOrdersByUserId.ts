@@ -5,22 +5,12 @@ import { ddb } from "../../utils/db";
 export const main: APIGatewayProxyHandlerV2 = async (event) => {
   try {
     const auth = verifyAuth(event);
-    const { id } = event.pathParameters || {};
 
     if (auth.role !== "customer") {
       return {
         statusCode: 403,
         body: JSON.stringify({
           message: "Only customers can view their orders",
-        }),
-      };
-    }
-
-    if (auth.userId !== id) {
-      return {
-        statusCode: 403,
-        body: JSON.stringify({
-          message: `Unauthorized user, ${auth.userId} , ${id} `,
         }),
       };
     }
