@@ -25,8 +25,8 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
 
     const orders = orderResp.Items || [];
 
-    // Collect eventIds
-    const eventIds = orders.map((o) => o.eventId);
+    // Collect eventIds with no duplicates
+    const eventIds = [...new Set(orders.map((o) => o.eventId))];
 
     // Fetch events in one batch
     const eventsResp = await ddb
