@@ -40,8 +40,6 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
     }
 
     const eventResp = resp.Item as EventType;
-    console.log(eventResp, "eventResp");
-    console.log("4 - Console log");
 
     if (eventResp.availableTickets < numberOfTickets) {
       return {
@@ -66,7 +64,7 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
 
     for (let i = 0; i < numberOfTickets; i++) {
       // create ticket id and pass to tickets
-      const ticketId = uuid();
+      const ticketId = uuid().slice(0, 8);
       tickets.push(ticketId);
 
       //create qr code data
