@@ -63,15 +63,14 @@ const jsonResponse = (statusCode: number, data: any, token?: string) => {
   };
 
   if (token) {
-    const isProd = false;
-
+    const isProd = process.env.STAGE === "dev";
     headers["Set-Cookie"] = [
       `authToken=${token}`,
       "Path=/",
       "HttpOnly",
       isProd ? "Secure" : "", // only add Secure in prod
       isProd ? "SameSite=None" : "SameSite=Lax", // Lax works on localhost
-      "Max-Age=3600",
+      "Max-Age=14400",
     ]
       .filter(Boolean)
       .join("; ");

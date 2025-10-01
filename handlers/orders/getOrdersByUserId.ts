@@ -48,10 +48,16 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
     }, {} as Record<string, any>);
 
     // Attach event data to orders
-    const populatedOrders = orders.map((order) => ({
-      ...order,
-      event: eventMap[order.eventId] || null,
-    }));
+    const populatedOrders = orders
+      .slice()
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .map((order) => ({
+        ...order,
+        event: eventMap[order.eventId] || null,
+      }));
 
     return {
       statusCode: 200,

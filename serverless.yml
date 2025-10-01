@@ -23,6 +23,7 @@ provider:
       allowCredentials: true
 
   environment:
+    STAGE: ${self:provider.stage}
     USERS_TABLE: Users
     EVENTS_TABLE: Events
     TICKETS_TABLE: Tickets
@@ -197,6 +198,16 @@ functions:
     package:
       patterns:
         - handlers/orders/getOrderById.ts
+        - utils/**
+  validateTicket:
+    handler: handlers/tickets/validate.main
+    events:
+      - httpApi:
+          path: /tickets/validate
+          method: POST
+    package:
+      patterns:
+        - handlers/tickets/validate.ts
         - utils/**
 
 resources:
