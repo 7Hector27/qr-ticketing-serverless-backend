@@ -5,11 +5,9 @@ import { verifyAuth } from "../../utils/auth";
 
 export const main: APIGatewayProxyHandlerV2 = async (event) => {
   try {
-    //Authenticate request
     const auth = verifyAuth(event);
-
-    //  Authorize: only admin/staff can create events
-    if (auth.role !== "admin" && auth.role !== "staff") {
+    console.log("Auth info:", auth);
+    if (auth.role !== "admin") {
       return {
         statusCode: 403,
         body: JSON.stringify({ message: "Forbidden" }),
@@ -28,7 +26,6 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
       imageUrl,
     } = body;
 
-    // Event Validation
     if (
       !title ||
       !description ||
