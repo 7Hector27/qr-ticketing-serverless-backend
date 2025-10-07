@@ -9,28 +9,28 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
 
     let items: any[] = [];
     let lastKey;
-    let scanned = 0;
+    const now = new Date().toISOString(); // current time
 
     do {
       const params: any = {
         TableName: process.env.EVENTS_TABLE!,
-        Limit: limit, // per page scan
+        Limit: limit,
         ExclusiveStartKey: lastKey,
+        FilterExpression: "#d >= :now",
+        ExpressionAttributeNames: { "#d": "date" },
+        ExpressionAttributeValues: { ":now": now },
       };
 
       if (event.queryStringParameters?.featured) {
         const isFeatured = event.queryStringParameters.featured === "true";
-        params.FilterExpression = "featured = :featured";
-        params.ExpressionAttributeValues = { ":featured": isFeatured };
+        params.FilterExpression += " AND featured = :featured";
+        params.ExpressionAttributeValues[":featured"] = isFeatured;
       }
 
       const result = await ddb.scan(params).promise();
 
       items = items.concat(result.Items || []);
       lastKey = result.LastEvaluatedKey;
-      scanned += result.Count || 0;
-
-      // stop if we have enough
     } while (items.length < limit && lastKey);
 
     return {
@@ -41,7 +41,10 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
       }),
     };
   } catch (err: any) {
-    console.error(err);
-    return { statusCode: 500, body: err.message };
+    console.error("Lambda error:", err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: err.message || "Unknown error" }),
+    };
   }
 };

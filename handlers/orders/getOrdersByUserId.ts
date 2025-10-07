@@ -5,7 +5,6 @@ import { ddb } from "../../utils/db";
 export const main: APIGatewayProxyHandlerV2 = async (event) => {
   try {
     const auth = verifyAuth(event);
-
     if (auth.role !== "customer") {
       return {
         statusCode: 403,
@@ -15,8 +14,7 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
       };
     }
 
-    // Parse query params for pagination
-    const limit = 3; // fixed at 3 per request
+    const limit = 3;
     const lastKey = event.queryStringParameters?.lastKey
       ? JSON.parse(decodeURIComponent(event.queryStringParameters.lastKey))
       : undefined;
@@ -27,17 +25,16 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
         KeyConditionExpression: "userId = :uid",
         ExpressionAttributeValues: { ":uid": auth.userId },
         Limit: limit,
-        ExclusiveStartKey: lastKey, // continue from where we left off
-        ScanIndexForward: false, // newest orders first
+        ExclusiveStartKey: lastKey,
+        ScanIndexForward: false,
       })
       .promise();
 
     const orders = orderResp.Items || [];
 
-    // Collect unique eventIds
     const eventIds = [...new Set(orders.map((o) => o.eventId))];
-
     let events: any[] = [];
+
     if (eventIds.length > 0) {
       const eventsResp = await ddb
         .batchGet({
@@ -62,17 +59,36 @@ export const main: APIGatewayProxyHandlerV2 = async (event) => {
       event: eventMap[order.eventId] || null,
     }));
 
+    let hasMore = false;
+
+    if (orderResp.LastEvaluatedKey) {
+      const nextQuery = await ddb
+        .query({
+          TableName: process.env.ORDERS_TABLE!,
+          KeyConditionExpression: "userId = :uid",
+          ExpressionAttributeValues: { ":uid": auth.userId },
+          Limit: 1,
+          ScanIndexForward: false,
+          ExclusiveStartKey: orderResp.LastEvaluatedKey,
+        })
+        .promise();
+
+      hasMore = !!nextQuery.Items?.length;
+    }
+
+    const responseBody: any = { orders: populatedOrders };
+
+    if (hasMore) {
+      responseBody.lastKey = encodeURIComponent(
+        JSON.stringify(orderResp.LastEvaluatedKey)
+      );
+    }
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        orders: populatedOrders,
-        lastKey: orderResp.LastEvaluatedKey
-          ? encodeURIComponent(JSON.stringify(orderResp.LastEvaluatedKey))
-          : null,
-      }),
+      body: JSON.stringify(responseBody),
     };
   } catch (error: any) {
-    console.error(error);
+    console.error("Error fetching user orders:", error);
     return {
       statusCode: 500,
       body: JSON.stringify({ message: error.message }),
